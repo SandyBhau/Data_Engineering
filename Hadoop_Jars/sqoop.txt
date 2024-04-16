@@ -1,0 +1,54 @@
+####################
+## sqoop
+#####################
+
+###################
+# mysql
+##################
+
+mysql -utraining -ptraining
+show databases;
+use loudacre;
+show tables;
+
+
+##################
+# sqoop
+################
+
+sqoop help
+
+sqoop list-tables --connect jdbc:mysql://localhost/loudacre --username training --password training
+
+sqoop import --help
+
+hdfs dfs -rm -r device
+sqoop import --connect jdbc:mysql://localhost/loudacre --username training --password training --table device
+
+hdfs dfs -rm -r /loudacre/accounts
+sqoop import --connect jdbc:mysql://localhost/loudacre --username training --password training --table accounts --target-dir '/loudacre/accounts'
+
+# warehouse
+sqoop import --connect jdbc:mysql://localhost/loudacre --username training --password training --table calllog --fields-terminated-by ':' --warehouse-dir '/loudacre'
+
+---------------------------------------------------------------------------------------
+# for increamental
+hdfs dfs -rm -r /loudacre/accounts
+# replace null with /n
+sqoop import --connect jdbc:mysql://localhost/loudacre --username training --password training --table accounts --target-dir '/loudacre/accounts' --null-non-string '\\N'
+
+# Run the add_new_accounts.py script to add the latest accounts to MySQL.
+$ $DEV1/exercises/sqoop/add_new_accounts.py
+
+sqoop import --connect jdbc:mysql://localhost/loudacre --username training --password training --incremental append --null-non-string '\\N' --table accounts --target-dir /loudacre/accounts --check-column acct_num --last-value 97349
+------------------------------------------------------------------------------------------
+
+sqoop eval --query "SELECT * FROM webpage LIMIT 10" --connect jdbc:mysql://localhost/loudacre --username training --password training
+
+# optional
+# Use Sqoop to import only accounts where the person lives in California
+# (state = "CA") and has an active account (acct_close_dt IS NULL).
+sqoop import --connect jdbc:mysql://localhost/loudacre --username training --password training --table accounts --target-dir /loudacre/account-active-ca --where 'state = "CA" and acct_close_dt IS NULL'
+
+
+
